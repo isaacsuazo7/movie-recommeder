@@ -1,69 +1,53 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:movie_recommender/src/home/models/movie.dart';
 import 'package:movie_recommender/src/home/repository/repository.dart';
 import 'package:translator/translator.dart';
 
-class Search extends SearchDelegate {
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-          icon: Icon(Icons.clear_rounded), onPressed: () => this.query = '')
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-        icon: Icon(Icons.arrow_back),
-        onPressed: () => this.close(context, null));
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    if (query.trim().length == 0) {
-      return Text('No hay valor en el query');
-    }
-    final repository = Repository();
-
-    return FutureBuilder(
-      future: repository.getMovieByName(query),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        List<Movie> movies = snapshot.data;
-        if (snapshot.hasData && movies.length > 1) {
-          return _showMovies(movies);
-        } else if (snapshot.hasData && movies.length < 1) {
-          return Container(child: Text('No existe'));
-        } else {
-          return Center(child: CircularProgressIndicator.adaptive());
-        }
-      },
-    );
-
-    // return FutureBuilder(
-    //   future: repository.getCountryByName(query),
-    //   builder: (BuildContext context, AsyncSnapshot snapshot) {
-    //     if (snapshot.hasData) {
-    //       return _showCountries(snapshot.data);
-    //     } else {
-    //       return Center(child: CircularProgressIndicator());
-    //     }
-    //   },
-    // );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    return ListTile(
-      title: Text('Sugerencias'),
+class ModalDetail {
+  final repository = Repository();
+  Widget recommenderMovies(String movie) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.purple,
+        centerTitle: true,
+        title: Text('Te recomendamos'),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(height: 10),
+            Text(
+              'En base a: ${movie.toUpperCase()}',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            FutureBuilder(
+              future: repository.getMovieByName(movie),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                List<Movie> movies = snapshot.data;
+                if (snapshot.hasData && movies.length > 1) {
+                  return _showMoviesModal(movies);
+                } else if (snapshot.hasData && movies.length < 1) {
+                  return Container(child: Text('No existe'));
+                } else {
+                  return Center(child: CircularProgressIndicator.adaptive());
+                }
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _showMovies(List<Movie> movies) {
+  Widget _showMoviesModal(List<Movie> movies) {
     return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       itemCount: movies.length,
       itemBuilder: (context, index) {
         Movie movie = movies[index];
